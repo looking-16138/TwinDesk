@@ -2370,5 +2370,5 @@
   "Also when a window is maximized": "窗口最大化时也保持指针在本机",
   "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here": "关闭时，浏览器、文件资源管理器等日常最大化的窗口仍可从边缘切换；开启后，任何最大化窗口都会把指针留在本机",
   "Apps left out of the fullscreen check": "全屏检测排除的应用",
-  "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "每行一个 .exe（可带或不带 .exe）。这些应用不会触发全屏自动锁定；最大化窗口锁定仍独立生效。",
+  "One .exe per line — with or without .exe, a full path works too. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "每行一个 .exe（可带或不带 .exe，也可填写完整路径）。这些应用不会触发全屏自动锁定；最大化窗口锁定仍独立生效。",
 });

@@ -2370,5 +2370,5 @@
   "Also when a window is maximized": "Also when a window is maximized",
   "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here": "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here",
   "Apps left out of the fullscreen check": "Apps left out of the fullscreen check",
-  "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.",
+  "One .exe per line — with or without .exe, a full path works too. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "One .exe per line — with or without .exe, a full path works too. These apps are excluded from fullscreen detection. The maximized-window setting still applies.",
 });

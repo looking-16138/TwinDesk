@@ -2365,5 +2365,5 @@
   "Starting on the phone…": "Telefonda başlatılıyor…",
   "Apps left out of the fullscreen check": "Tam ekran denetiminden hariç tutulan uygulamalar",
   "When Windows reports a fullscreen app or presentation state, the pointer stays on this computer. Some borderless games may not be detected by Windows": "Windows tam ekran bir uygulama veya sunum modu bildirdiğinde işaretçi bu bilgisayarda kalır. Bazı çerçevesiz oyunları Windows algılamayabilir.",
-  "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "Her satıra bir .exe — .exe ile ya da olmadan. Bu uygulamalar tam ekran denetiminden muaftır; pencere büyütme kilidi ayrıca geçerlidir.",
+  "One .exe per line — with or without .exe, a full path works too. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "Her satıra bir .exe — .exe ile ya da olmadan, tam yol da olur. Bu uygulamalar tam ekran denetiminden muaftır; pencere büyütme kilidi ayrıca geçerlidir.",
 });

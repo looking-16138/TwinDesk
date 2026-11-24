@@ -17,7 +17,7 @@ namespace MacShare
         // Settings ("kvmConfig", Program.cs).
         public static bool AutoLockFullscreen = true;
         public static bool AutoLockMaximized;
-        static HashSet<string> excluded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        static string[] excluded = new string[0];
 
         // QUERY_USER_NOTIFICATION_STATE (shellapi.h). Only the first three block the edge, exactly as
         // PowerToys: bus, Direct3D fullscreen, presentation mode.
@@ -101,32 +101,54 @@ namespace MacShare
                 || state == QueryUserNotificationState.PresentationMode;
         }
 
-        // "vlc" and "vlc.exe" both name vlc.exe; blanks and repeats are dropped (case-insensitively).
+        // Entries may be a file name, with or without ".exe", or a full path; blanks and repeats
+        // (whatever the case, path or extension) are dropped. Microsoft's check compares the file name
+        // and the name without ".exe", both sides, so a pasted path matches like the bare name does.
         public static void SetExcludedApps(IEnumerable<string> names)
         {
-            HashSet<string> next = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            List<string> list = new List<string>();
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (names != null)
             {
                 foreach (string n in names)
                 {
                     if (n == null) continue;
-                    string name = n.Trim();
-                    if (name.Length == 0) continue;
-                    if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                        name = name.Substring(0, name.Length - 4).TrimEnd();
-                    if (name.Length > 0) next.Add(name);
+                    string entry = n.Trim();
+                    if (entry.Length == 0) continue;
+                    string key = FileStem(entry); // "vlc", "vlc.exe" and its path are one entry
+                    if (key.Length == 0 || !seen.Add(key)) continue;
+                    list.Add(entry);
                 }
             }
-            excluded = next;
+            excluded = list.ToArray();
         }
 
         static bool IsAppIgnoredByFullscreenCheck(IntPtr fg)
         {
-            if (excluded.Count == 0) return false; // no list: never look the process up
+            if (excluded.Length == 0) return false; // no list: never look the process up
             string path = ProcessImagePath(fg);
             if (path.Length == 0) return false; // cannot tell: keep the protection
-            string name = Path.GetFileNameWithoutExtension(path);
-            return name.Length > 0 && excluded.Contains(name);
+            string file = FileName(path);
+            string stem = FileStem(path);
+            foreach (string entry in excluded)
+            {
+                if (string.Equals(FileStem(entry), stem, StringComparison.OrdinalIgnoreCase)) return true;
+                if (string.Equals(FileName(entry), file, StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            return false;
+        }
+
+        // Path.GetFileName* throw on the characters a hand-edited settings file can hold: take it as written.
+        static string FileName(string path)
+        {
+            try { return Path.GetFileName(path); }
+            catch (ArgumentException) { return path; }
+        }
+
+        static string FileStem(string path)
+        {
+            try { return Path.GetFileNameWithoutExtension(path); }
+            catch (ArgumentException) { return path; }
         }
 
         static string ProcessImagePath(IntPtr hwnd)

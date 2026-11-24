@@ -37,7 +37,7 @@ UI.tab({
     const lockMaximizedRow = UI.row(t('Also when a window is maximized'), t('Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here'), [lockMaximized]);
     const excluded = UI.exeList({
       label: t('Apps left out of the fullscreen check'),
-      hint: t('One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.'),
+      hint: t('One .exe per line — with or without .exe, a full path works too. These apps are excluded from fullscreen detection. The maximized-window setting still applies.'),
     }, (names) => set({ autoLockFullscreenExcludedApps: names }));
     const ble = UI.switch((v) => set({ ble: v }), { label: t('Over Bluetooth') });
     const bleRow = UI.row(t('Over Bluetooth'), t('When {name} isn’t on this network and you’re connected through Bluetooth (slower). Off: nothing crosses until you’re on Wi-Fi again. The same on both'), [ble]);

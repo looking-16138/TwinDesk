@@ -17,7 +17,7 @@ const OLD_TABS = { display: 'mac-pc', receive: 'mac-pc', share: 'pc-mac' }; // o
 
 const bool = (v, d) => (typeof v === 'boolean' ? v : d);
 // The apps the fullscreen check leaves alone: trimmed, blanks dropped, repeats dropped whatever the
-// case or the ".exe" (the helper compares file names without it).
+// case or the ".exe". A full path is kept as written (the helper matches its file name too).
 const exeList = (v) => {
   if (!Array.isArray(v)) return [];
   const seen = new Set();
@@ -25,7 +25,8 @@ const exeList = (v) => {
   for (const s of v) {
     if (typeof s !== 'string') continue;
     const name = s.trim();
-    const key = name.replace(/\.exe$/i, '').toLowerCase();
+    const base = name.split(/[\\/]/).pop() || '';
+    const key = base.replace(/\.exe$/i, '').toLowerCase();
     if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push(name);

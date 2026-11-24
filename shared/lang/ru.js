@@ -2365,5 +2365,5 @@
   "Starting on the phone…": "Запуск на телефоне…",
   "Apps left out of the fullscreen check": "Приложения, исключённые из проверки полного экрана",
   "When Windows reports a fullscreen app or presentation state, the pointer stays on this computer. Some borderless games may not be detected by Windows": "Когда Windows сообщает о полноэкранном приложении или режиме презентации, указатель остаётся на этом компьютере. Некоторые игры без рамки Windows может не распознать.",
-  "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "По одному .exe в строке — с .exe или без. Эти приложения не запускают автоблокировку полного экрана; блокировка максимизированных окон действует отдельно.",
+  "One .exe per line — with or without .exe, a full path works too. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "По одному .exe в строке — с .exe или без, полный путь тоже подойдёт. Эти приложения не запускают автоблокировку полного экрана; блокировка максимизированных окон действует отдельно.",
 });
