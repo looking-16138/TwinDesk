@@ -66,6 +66,11 @@ namespace MacShare
         // window as it is: no cached flag, nothing to wait for.
         public static bool ShouldBlockCrossing()
         {
+#if FULLKVM
+            // A Full KVM agent also runs on Winlogon and the screen saver's desktop, where what fills
+            // the screen is a security surface (lock, UAC), not a game (Agent.cs).
+            if (Agent.On && !string.Equals(Agent.Desktop, "Default", StringComparison.OrdinalIgnoreCase)) return false;
+#endif
             if (!AutoLockFullscreen && !AutoLockMaximized) return false;
             IntPtr fg = GetForegroundWindow();
             // The desktop and the shell are not an app: show desktop, a fresh login.
