@@ -2366,9 +2366,9 @@
   "Starting on the phone…": "正在手机上启动…",
   "Games and fullscreen apps": "游戏与全屏应用",
   "Keep the pointer here in fullscreen games": "全屏游戏时保持指针在本机",
-  "A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again": "全屏（含无边框全屏）运行的游戏会把指针留在这台电脑上；一旦恢复为窗口，即可继续从屏幕边缘切换",
+  "When Windows reports a fullscreen app or presentation state, the pointer stays on this computer. Some borderless games may not be detected by Windows": "当 Windows 检测到全屏应用或演示状态时，指针会留在本机。部分无边框全屏游戏可能无法被 Windows 识别。",
   "Also when a window is maximized": "窗口最大化时也保持指针在本机",
   "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here": "关闭时，浏览器、文件资源管理器等日常最大化的窗口仍可从边缘切换；开启后，任何最大化窗口都会把指针留在本机",
   "Apps left out of the fullscreen check": "全屏检测排除的应用",
-  "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app": "每行一个 .exe（可带或不带 .exe）。这些应用始终可以从屏幕边缘切换，即使 Windows 报告有全屏应用",
+  "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "每行一个 .exe（可带或不带 .exe）。这些应用不会触发全屏自动锁定；最大化窗口锁定仍独立生效。",
 });

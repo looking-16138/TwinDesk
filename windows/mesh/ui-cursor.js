@@ -32,12 +32,12 @@ UI.tab({
     // A fullscreen app keeps the pointer here (windows-helper/WindowModeWatcher.cs), on every edge:
     // Windows itself is asked as the edge is about to cross, not a background watcher.
     const lockFullscreen = UI.switch((v) => set({ autoLockFullscreen: v }), { label: t('Keep the pointer here in fullscreen games') });
-    const lockFullscreenRow = UI.row(t('Keep the pointer here in fullscreen games'), t('A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again'), [lockFullscreen]);
+    const lockFullscreenRow = UI.row(t('Keep the pointer here in fullscreen games'), t('When Windows reports a fullscreen app or presentation state, the pointer stays on this computer. Some borderless games may not be detected by Windows'), [lockFullscreen]);
     const lockMaximized = UI.switch((v) => set({ autoLockMaximized: v }), { label: t('Also when a window is maximized') });
     const lockMaximizedRow = UI.row(t('Also when a window is maximized'), t('Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here'), [lockMaximized]);
     const excluded = UI.exeList({
       label: t('Apps left out of the fullscreen check'),
-      hint: t('One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app'),
+      hint: t('One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.'),
     }, (names) => set({ autoLockFullscreenExcludedApps: names }));
     const ble = UI.switch((v) => set({ ble: v }), { label: t('Over Bluetooth') });
     const bleRow = UI.row(t('Over Bluetooth'), t('When {name} isn’t on this network and you’re connected through Bluetooth (slower). Off: nothing crosses until you’re on Wi-Fi again. The same on both'), [ble]);

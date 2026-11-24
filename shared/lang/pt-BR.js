@@ -2364,5 +2364,6 @@
   "It stopped.": "Parou.",
   "Starting on the phone…": "Iniciando no celular…",
   "Apps left out of the fullscreen check": "Apps fora da verificação de tela cheia",
-  "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app": "Um .exe por linha — com ou sem .exe. Estes apps podem sempre atravessar a borda, mesmo quando o Windows relata um app em tela cheia",
+  "When Windows reports a fullscreen app or presentation state, the pointer stays on this computer. Some borderless games may not be detected by Windows": "Quando o Windows detecta um app em tela cheia ou modo de apresentação, o ponteiro fica neste computador. Alguns jogos sem bordas podem não ser detectados pelo Windows.",
+  "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "Um .exe por linha — com ou sem .exe. Estes apps ficam fora da verificação de tela cheia; o bloqueio de janelas maximizadas continua valendo.",
 });

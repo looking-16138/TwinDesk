@@ -2366,9 +2366,9 @@
   "Starting on the phone…": "Starting on the phone…",
   "Games and fullscreen apps": "Games and fullscreen apps",
   "Keep the pointer here in fullscreen games": "Keep the pointer here in fullscreen games",
-  "A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again": "A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again",
+  "When Windows reports a fullscreen app or presentation state, the pointer stays on this computer. Some borderless games may not be detected by Windows": "When Windows reports a fullscreen app or presentation state, the pointer stays on this computer. Some borderless games may not be detected by Windows",
   "Also when a window is maximized": "Also when a window is maximized",
   "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here": "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here",
   "Apps left out of the fullscreen check": "Apps left out of the fullscreen check",
-  "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app": "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app",
+  "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.": "One .exe per line — with or without .exe. These apps are excluded from fullscreen detection. The maximized-window setting still applies.",
 });
