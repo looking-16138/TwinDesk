@@ -133,6 +133,7 @@ namespace MacShare
             Native.POINT p;
             Native.GetCursorPos(out p);
             if (retArmed) { FeedReturn(p.x, p.y, dx, dy); return; }
+            if (WindowModeWatcher.Locked) { pushes.Clear(); return; } // a game fills the screen: the pointer stays here (WindowModeWatcher.cs)
             if (!DriveOther || Sides.Count == 0 || (AnyButtonDown() && !AppWindows.Grabbing)) { pushes.Clear(); return; } // Rule 6: no crossing mid-drag
             if (!EdgeAllowed()) { pushes.Clear(); return; } // hold-to-cross: not without the key (Crossing.cs)
             foreach (string side in Sides)
