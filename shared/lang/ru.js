@@ -2363,4 +2363,6 @@
   "Tap Allow in TwinDesk’s notification on the phone, then confirm Android’s VPN request.": "Нажмите «Разрешить» в уведомлении TwinDesk на телефоне, затем подтвердите запрос VPN от Android.",
   "It stopped.": "Остановлено.",
   "Starting on the phone…": "Запуск на телефоне…",
+  "Apps left out of the fullscreen check": "Приложения, исключённые из проверки полного экрана",
+  "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app": "По одному .exe в строке — с .exe или без. Эти приложения всегда могут пересекать край, даже когда Windows сообщает о полноэкранном приложении",
 });

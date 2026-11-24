@@ -259,6 +259,7 @@ class Kvm {
       // The helper holds the edge while a game fills the screen (WindowModeWatcher.cs).
       autoLockFullscreen: k.autoLockFullscreen !== false,
       autoLockMaximized: k.autoLockMaximized === true,
+      autoLockFullscreenExcludedApps: k.autoLockFullscreenExcludedApps || [],
       takeBack: !k.syncPads, // off with Sync touchpads: our own trackpad never takes the computer back (the 'local' watch)
     });
     // Our switch, for the Mac (it doesn't pick up drags towards us while it's off).

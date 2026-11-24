@@ -342,6 +342,14 @@ input[type="text"]:focus, input[type="search"]:focus { outline: none; box-shadow
 .feature-art .fa-cable { fill: none; stroke: var(--fa-dev); stroke-width: 5; stroke-linecap: round; }
 .feature-art .fa-slot { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; opacity: 0.6; }
 .feature-art .fa-led { fill: #fff; }
+/* App names for the fullscreen check: the field takes the row's width, under the label. */
+.row.exe-list-row { flex-wrap: wrap; align-items: flex-start; }
+.exe-list {
+  flex: 1 1 100%; box-sizing: border-box; min-height: 64px; resize: vertical;
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: transparent; color: inherit; font: inherit; font-size: 12px; user-select: text;
+}
+.exe-list:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 .feature-art .fa-termwin { stroke: #48484a; stroke-width: 1; }
 .feature-art .fa-termbar { fill: #48484a; }
 .feature-art .fa-termdot { fill: #8e8e93; }

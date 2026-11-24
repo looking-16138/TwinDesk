@@ -2369,4 +2369,6 @@
   "A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again": "A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again",
   "Also when a window is maximized": "Also when a window is maximized",
   "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here": "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here",
+  "Apps left out of the fullscreen check": "Apps left out of the fullscreen check",
+  "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app": "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app",
 });

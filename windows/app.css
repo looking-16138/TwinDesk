@@ -366,6 +366,14 @@ select option, select optgroup { background-color: #ffffff; color: #1d1d1f; }
 .ios-result.bad { color: var(--bad); }
 .ios-how { margin: 6px 2px 28px; max-width: 760px; }
 .ios-how > summary { cursor: pointer; font-size: 13px; font-weight: 600; padding: 6px 0; list-style: none; display: flex; align-items: center; gap: 6px; }
+/* App names for the fullscreen check: the field takes the row's width, under the label. */
+.row.exe-list-row { flex-wrap: wrap; align-items: flex-start; }
+.exe-list {
+  flex: 1 1 100%; box-sizing: border-box; min-height: 64px; resize: vertical;
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: transparent; color: inherit; font: inherit; font-size: 12px; user-select: text;
+}
+.exe-list:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 .ios-how > summary::-webkit-details-marker { display: none; }
 .ios-how > summary::before { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s; margin: 0 3px; }
 .ios-how[open] > summary::before { transform: rotate(45deg); }

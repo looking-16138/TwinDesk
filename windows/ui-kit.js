@@ -193,6 +193,29 @@ const UI = {
     return row;
   },
 
+  // A list of app names for the fullscreen check: one .exe a line, written when the field is left.
+  // set() leaves the field alone while it has the keyboard.
+  exeList({ label, hint, placeholder = 'vlc.exe' }, onChange) {
+    const area = UI.el('textarea', { class: 'exe-list', rows: 3, spellcheck: false, placeholder });
+    area.setAttribute('aria-label', label);
+    area.onchange = () => onChange(area.value.split('\n'));
+    const row = UI.el('div', { class: 'row exe-list-row' }, [
+      UI.el('div', { class: 'text' }, [
+        UI.el('span', { class: 'label', text: label }),
+        UI.el('span', { class: 'hint', text: hint }),
+      ]),
+      area,
+    ]);
+    return {
+      el: row,
+      set(names) {
+        if (document.activeElement === area) return;
+        const text = (names || []).join('\n');
+        if (area.value !== text) area.value = text;
+      },
+    };
+  },
+
   card(title, rows, { actions, cls = '' } = {}) {
     const wrap = UI.el('div', { class: 'card-wrap' });
     const tEl = title ? UI.el('span', { text: UI.fill(title) }) : null;

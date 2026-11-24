@@ -2363,4 +2363,6 @@
   "Tap Allow in TwinDesk’s notification on the phone, then confirm Android’s VPN request.": "Telefondaki TwinDesk bildiriminde İzin ver’e dokunun, ardından Android’in VPN isteğini onaylayın.",
   "It stopped.": "Durdu.",
   "Starting on the phone…": "Telefonda başlatılıyor…",
+  "Apps left out of the fullscreen check": "Tam ekran denetiminden hariç tutulan uygulamalar",
+  "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app": "Her satıra bir .exe — .exe ile ya da olmadan. Bu uygulamalar Windows tam ekran uygulama bildirse bile kenardan geçebilir",
 });

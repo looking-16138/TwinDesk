@@ -2363,4 +2363,6 @@
   "Tap Allow in TwinDesk’s notification on the phone, then confirm Android’s VPN request.": "Toque em Permitir na notificação do TwinDesk no celular e confirme o pedido de VPN do Android.",
   "It stopped.": "Parou.",
   "Starting on the phone…": "Iniciando no celular…",
+  "Apps left out of the fullscreen check": "Apps fora da verificação de tela cheia",
+  "One .exe per line — with or without .exe. These apps can always cross the edge, even while Windows reports a fullscreen app": "Um .exe por linha — com ou sem .exe. Estes apps podem sempre atravessar a borda, mesmo quando o Windows relata um app em tela cheia",
 });

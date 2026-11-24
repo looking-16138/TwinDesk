@@ -16,6 +16,22 @@ const TABS = ['phone', 'overview', 'connection', 'mirror', 'papps', 'calls', 'me
 const OLD_TABS = { display: 'mac-pc', receive: 'mac-pc', share: 'pc-mac' }; // older names
 
 const bool = (v, d) => (typeof v === 'boolean' ? v : d);
+// The apps the fullscreen check leaves alone: trimmed, blanks dropped, repeats dropped whatever the
+// case or the ".exe" (the helper compares file names without it).
+const exeList = (v) => {
+  if (!Array.isArray(v)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const s of v) {
+    if (typeof s !== 'string') continue;
+    const name = s.trim();
+    const key = name.replace(/\.exe$/i, '').toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+};
 // Which Bluetooth device each phone is (shared/phonehub.js): {phone's id: device id}, a few.
 const btDevices = (v) => Object.fromEntries(Object.entries(v && typeof v === 'object' ? v : {})
   .filter(([k, id]) => typeof k === 'string' && k.length <= 100 && typeof id === 'string' && id).slice(-20).map(([k, id]) => [k, id.slice(0, 400)])); // Windows' device ids are long
@@ -83,10 +99,12 @@ function normalize(s) {
       linkedBy: kvm.linkedBy && typeof kvm.linkedBy === 'object'
         ? Object.fromEntries(Object.entries(kvm.linkedBy).filter(([, v]) => typeof v === 'boolean').slice(0, 50)) : {},
       gestures: bool(kvm.gestures, true), // Trackpad gestures work on the other computer (pair.sync 'gestures')
-      // A game in fullscreen keeps the pointer on this computer (windows-helper/WindowModeWatcher.cs);
-      // exclusive and borderless fullscreen are the same case there.
+      // A fullscreen app keeps the pointer on this computer (windows-helper/WindowModeWatcher.cs asks
+      // Windows itself, SHQueryUserNotificationState, as the edge is about to cross).
       autoLockFullscreen: bool(kvm.autoLockFullscreen, true),
       autoLockMaximized: bool(kvm.autoLockMaximized, false), // ... and a maximized window too (off: browsers maximize all day)
+      // Apps that may cross the edge even while Windows reports a fullscreen app (WindowModeWatcher.cs).
+      autoLockFullscreenExcludedApps: exeList(kvm.autoLockFullscreenExcludedApps),
       shakeHome: bool(kvm.shakeHome, false), // shake this computer's mouse while driving: the pointer comes home (the helper's shake)
       syncPads: bool(kvm.syncPads, false), // every mouse and trackpad moves the one pointer; off: this PC's own takes it back (pair.sync 'syncPads')
       ble: bool(kvm.ble, true), // cursor sharing while the session runs through Bluetooth (pair.sync 'ble')
