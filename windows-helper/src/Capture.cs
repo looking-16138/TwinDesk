@@ -684,7 +684,6 @@ namespace MacShare
             Native.POINT p;
             Native.GetCursorPos(out p);
             if (retArmed) { FeedReturn(p.x, p.y, dx, dy); return; }
-            if (WindowModeWatcher.Locked) { push = 0; return; } // a game fills the screen: the pointer stays here (WindowModeWatcher.cs)
             if (!DriveOther || Side == null || (AnyButtonDown() && !AppWindows.Grabbing)) { push = 0; return; } // Rule 6: no crossing mid-drag
             if (!EdgeAllowed()) { push = 0; return; } // hold-to-cross: not without the key (Crossing.cs)
             double outward = Screens.Outward(Side, dx, dy);
@@ -696,6 +695,9 @@ namespace MacShare
             if (push == 0) pushSince = now;
             push += outward;
             if (push < ResistancePx || !Dwelt(ResistancePx, pushSince, now)) return;
+            // Asked once, on the frame that would cross (WindowModeWatcher.cs): a fullscreen app keeps
+            // the pointer here, and the push is dropped so it cannot fire the moment that app is gone.
+            if (WindowModeWatcher.ShouldBlockCrossing()) { push = 0; return; }
             double offset = Screens.Offset(p.x, p.y, Side);
             Begin(true, EdgeKeyboard); // start capturing at once so no motion leaks, then tell main
             saved = new Point(p.x, p.y);

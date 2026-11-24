@@ -46,7 +46,6 @@ namespace MacShare
             return d != null && d.TryGetValue(k, out v) && v is bool ? (bool)v : def;
         }
 
-#if MULTI
         // An array of strings (non-strings skipped); null when the key is absent or not an array.
         public static List<string> Strs(Dictionary<string, object> d, string k)
         {
@@ -58,7 +57,6 @@ namespace MacShare
             foreach (object o in arr) if (o is string) r.Add((string)o);
             return r;
         }
-#endif
 
         public static Dictionary<string, object> Obj(Dictionary<string, object> d, string k)
         {

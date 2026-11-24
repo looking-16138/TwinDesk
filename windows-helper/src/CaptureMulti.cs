@@ -133,7 +133,6 @@ namespace MacShare
             Native.POINT p;
             Native.GetCursorPos(out p);
             if (retArmed) { FeedReturn(p.x, p.y, dx, dy); return; }
-            if (WindowModeWatcher.Locked) { pushes.Clear(); return; } // a game fills the screen: the pointer stays here (WindowModeWatcher.cs)
             if (!DriveOther || Sides.Count == 0 || (AnyButtonDown() && !AppWindows.Grabbing)) { pushes.Clear(); return; } // Rule 6: no crossing mid-drag
             if (!EdgeAllowed()) { pushes.Clear(); return; } // hold-to-cross: not without the key (Crossing.cs)
             foreach (string side in Sides)
@@ -149,6 +148,9 @@ namespace MacShare
                 if (e.Amount == 0) e.Since = now;
                 e.Amount += outward;
                 if (e.Amount < ResistancePx || !Dwelt(ResistancePx, e.Since, now)) continue;
+                // Asked once, on the frame that would cross (WindowModeWatcher.cs); every side's push goes,
+                // so none fires by itself when the app is gone.
+                if (WindowModeWatcher.ShouldBlockCrossing()) { pushes.Clear(); return; }
                 double offset = Screens.Offset(p.x, p.y, side);
                 Begin(true, EdgeKeyboard, side); // start capturing at once so no motion leaks, then tell main
                 saved = new Point(p.x, p.y);

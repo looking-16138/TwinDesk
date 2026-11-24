@@ -1,57 +1,55 @@
 // TwinDesk — Copyright (C) 2026 inukaasith. GPL-3.0, see LICENSE.
-// The foreground window's mode (WindowModeWatcher.cs): while a window fills its monitor (a game in
-// exclusive or borderless fullscreen) — or, when asked, a maximized one — the pointer must not leave
-// this PC at the edge (Capture.OnRawMove reads Locked). Only the way out is blocked: FeedReturn, the
-// pointer coming home from the other computer, is never touched.
+// Whether the pointer may leave this PC (WindowModeWatcher.cs), asked only when it is already at the
+// edge and the resistance has been reached — the same on-demand check Microsoft's Mouse Without
+// Borders makes (Common.IsEasyMouseSwitchAllowed). Nothing runs in the background: no timer, no window
+// events. A fullscreen app is what the shell reports (SHQueryUserNotificationState), not what window
+// bounds suggest; the maximized switch is a TwinDesk option of its own.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Forms;
 
 namespace MacShare
 {
     static class WindowModeWatcher
     {
-        // Settings ("kvmConfig", Program.cs). Fullscreen and borderless fullscreen are one case: the
-        // window style (WS_CAPTION) says nothing about the display mode, the window's bounds on its
-        // monitor do.
+        // Settings ("kvmConfig", Program.cs).
         public static bool AutoLockFullscreen = true;
         public static bool AutoLockMaximized;
+        static HashSet<string> excluded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        public enum Mode { Normal, Maximized, Fullscreen }
+        // QUERY_USER_NOTIFICATION_STATE (shellapi.h). Only the first three block the edge, exactly as
+        // PowerToys: bus, Direct3D fullscreen, presentation mode.
+        enum QueryUserNotificationState
+        {
+            NotPresent = 1,
+            Busy = 2,
+            RunningD3DFullScreen = 3,
+            PresentationMode = 4,
+            AcceptsNotifications = 5,
+            QuietTime = 6,
+            App = 7
+        }
 
-        // Read by Capture.OnRawMove: the whole point of the module is this one flag.
-        public static bool Locked { get { return locked; } }
+        [DllImport("shell32.dll")] static extern int SHQueryUserNotificationState(out QueryUserNotificationState state);
+        [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")] static extern IntPtr GetShellWindow();
+        [DllImport("user32.dll")] static extern IntPtr GetDesktopWindow();
+        [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+        [DllImport("user32.dll")] static extern bool IsZoomed(IntPtr h);
+        [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr h, int index);
+        [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr h, out RECT r);
+        [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern bool GetMonitorInfo(IntPtr mon, ref MONITORINFO info);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder name, ref int size);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool CloseHandle(IntPtr h);
 
-        static volatile bool locked;
-        static string mode = "normal";
-        static IntPtr seen; // the window the last evaluation reported on, for the "winMode" event
-        static string seenExe = "";
-
-        // Window events that can change the answer. The 500 ms timer catches what they miss (a game
-        // that crashes, a display resolution change) without ever running on the move path.
-        const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
-        const uint EVENT_SYSTEM_MINIMIZESTART = 0x0016;
-        const uint EVENT_SYSTEM_MINIMIZEEND = 0x0017;
-        const uint EVENT_SYSTEM_MOVESIZESTART = 0x000A;
-        const uint EVENT_SYSTEM_MOVESIZEEND = 0x000B;
-        const uint EVENT_OBJECT_LOCATIONCHANGE = 0x800B;
-        const uint EVENT_OBJECT_CLOAKED = 0x8017;
-        const uint EVENT_OBJECT_UNCLOAKED = 0x8018;
-        const uint WINEVENT_OUTOFCONTEXT = 0x0000, WINEVENT_SKIPOWNPROCESS = 0x0002;
-
-        const int OBJID_WINDOW = 0, CHILDID_SELF = 0;
-        const uint GA_ROOT = 2, MONITOR_DEFAULTTONEAREST = 2;
+        const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+        const uint MONITOR_DEFAULTTONEAREST = 2;
         const int GWL_STYLE = -16, WS_CAPTION = 0x00C00000;
-        const int DWMWA_EXTENDED_FRAME_BOUNDS = 9, DWMWA_CLOAKED = 14;
-
-        // Behind the pointer: the desktop, the taskbar and Task View also "fill" a monitor.
-        static readonly HashSet<string> shells = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
-            "Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd", "MultitaskingViewFrame", "ForegroundStaging"
-        };
 
         [StructLayout(LayoutKind.Sequential)] struct RECT { public int left, top, right, bottom; }
 
@@ -64,205 +62,105 @@ namespace MacShare
             public uint dwFlags;
         }
 
-        delegate void WinEventProc(IntPtr hook, uint ev, IntPtr h, int obj, int child, uint thread, uint time);
-
-        [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll")] static extern IntPtr GetAncestor(IntPtr h, uint flags);
-        [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
-        [DllImport("user32.dll")] static extern bool IsIconic(IntPtr h);
-        [DllImport("user32.dll")] static extern bool IsZoomed(IntPtr h);
-        [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr h, int index);
-        [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr h, out RECT r);
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetClassName(IntPtr h, StringBuilder s, int max);
-        [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
-        [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern bool GetMonitorInfo(IntPtr mon, ref MONITORINFO info);
-        [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);
-        [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr h, int attr, out int v, int size);
-        [DllImport("user32.dll")] static extern IntPtr SetWinEventHook(uint min, uint max, IntPtr mod, WinEventProc fn, uint pid, uint tid, uint flags);
-        [DllImport("user32.dll")] static extern bool UnhookWinEvent(IntPtr hook);
-
-        static WinEventProc winEvent; // kept alive (the GC would collect it otherwise)
-        static IntPtr hookForeground, hookMinimize, hookMove, hookLocation, hookCloak;
-        static Timer timer;
-        static Action<Dictionary<string, object>> emit;
-        static DateTime lastEval = DateTime.MinValue;
-
-        // On the main (message-loop) thread, before Application.Run.
-        public static void Init(Action<Dictionary<string, object>> sink)
+        // The one entry point (Capture.OnRawMove, right before Begin). Answers now, from the foreground
+        // window as it is: no cached flag, nothing to wait for.
+        public static bool ShouldBlockCrossing()
         {
-            if (timer != null) return;
-            emit = sink;
-            winEvent = delegate (IntPtr hook, uint ev, IntPtr h, int obj, int child, uint thread, uint time)
+            if (!AutoLockFullscreen && !AutoLockMaximized) return false;
+            IntPtr fg = GetForegroundWindow();
+            // The desktop and the shell are not an app: show desktop, a fresh login.
+            if (fg == IntPtr.Zero || fg == GetShellWindow() || fg == GetDesktopWindow()) return false;
+            if (AutoLockFullscreen && IsFullscreenAppInFront(fg)) return true;
+            return AutoLockMaximized && IsMaximizedWindowBlockingCrossing(fg);
+        }
+
+        // Microsoft's order: the notification state first, then the app's name against the list. A
+        // process we cannot read keeps the protection (the state already said fullscreen).
+        static bool IsFullscreenAppInFront(IntPtr fg)
+        {
+            if (!IsBlockedNotificationState()) return false;
+            return !IsAppIgnoredByFullscreenCheck(fg);
+        }
+
+        static bool IsBlockedNotificationState()
+        {
+            QueryUserNotificationState state;
+            int hr = SHQueryUserNotificationState(out state);
+            if (hr != 0)
             {
-                if (obj != OBJID_WINDOW || child != CHILDID_SELF) return;
-                // Location changes come with every animation and drag: only the foreground window's.
-                if (ev == EVENT_OBJECT_LOCATIONCHANGE && h != ForegroundRoot()) return;
-                Request();
-            };
-            uint flags = WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS; // our own ParkPad never locks anything
-            hookForeground = Hook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, flags);
-            hookMinimize = Hook(EVENT_SYSTEM_MINIMIZESTART, EVENT_SYSTEM_MINIMIZEEND, flags);
-            hookMove = Hook(EVENT_SYSTEM_MOVESIZESTART, EVENT_SYSTEM_MOVESIZEEND, flags);
-            hookLocation = Hook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, flags);
-            hookCloak = Hook(EVENT_OBJECT_CLOAKED, EVENT_OBJECT_UNCLOAKED, flags);
-            // Whatever the hooks miss, the check below finds within half a second (a game that crashes,
-            // a display that changes its size). It is the fallback, so a failed hook is not fatal.
-            timer = new Timer();
-            timer.Interval = 500;
-            timer.Tick += delegate { Request(); };
-            timer.Start();
-            Evaluate();
+                Console.Error.WriteLine("winmode: SHQueryUserNotificationState failed 0x" + hr.ToString("X8") + "; the edge stays open");
+                return false;
+            }
+            return state == QueryUserNotificationState.Busy
+                || state == QueryUserNotificationState.RunningD3DFullScreen
+                || state == QueryUserNotificationState.PresentationMode;
         }
 
-        static IntPtr Hook(uint min, uint max, uint flags)
+        // "vlc" and "vlc.exe" both name vlc.exe; blanks and repeats are dropped (case-insensitively).
+        public static void SetExcludedApps(IEnumerable<string> names)
         {
-            IntPtr h = SetWinEventHook(min, max, IntPtr.Zero, winEvent, 0, 0, flags);
-            if (h == IntPtr.Zero)
-                Console.Error.WriteLine("winmode: event hook 0x" + min.ToString("X4") + "-0x" + max.ToString("X4") + " failed; the 500 ms check stays");
-            return h;
-        }
-
-        // A clean exit (the app went away) takes the hooks and the timer with it; idempotent.
-        public static void Stop()
-        {
-            Unhook(ref hookForeground);
-            Unhook(ref hookMinimize);
-            Unhook(ref hookMove);
-            Unhook(ref hookLocation);
-            Unhook(ref hookCloak);
-            if (timer != null) { timer.Stop(); timer.Dispose(); timer = null; }
-            emit = null;
-            seen = IntPtr.Zero;
-            seenExe = "";
-            mode = "normal";
-            locked = false;
-        }
-
-        static void Unhook(ref IntPtr hook)
-        {
-            if (hook == IntPtr.Zero) return;
-            UnhookWinEvent(hook);
-            hook = IntPtr.Zero;
-        }
-
-        // Coalesce a burst (window animations, a drag across monitors) into one evaluation, and let the
-        // timer pick up anything skipped here.
-        static void Request()
-        {
-            if ((DateTime.UtcNow - lastEval).TotalMilliseconds < 25) return; // the timer catches up
-            lastEval = DateTime.UtcNow;
-            Evaluate();
-        }
-
-        static IntPtr ForegroundRoot()
-        {
-            IntPtr h = GetForegroundWindow();
-            return h == IntPtr.Zero ? h : GetAncestor(h, GA_ROOT);
-        }
-
-        static void Evaluate()
-        {
-            Mode m = Mode.Normal;
-            IntPtr root = ForegroundRoot();
-            if (root != IntPtr.Zero && IsWindowVisible(root) && !IsIconic(root) && !Cloaked(root) && !IsShell(root))
+            HashSet<string> next = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (names != null)
             {
-                RECT frame, mon, work;
-                // The visible frame: a maximized window's GetWindowRect carries its invisible borders.
-                if (VisibleFrame(root, out frame) && MonitorRects(root, out mon, out work))
+                foreach (string n in names)
                 {
-                    m = Classify(ToRect(frame), ToRect(mon), ToRect(work), IsZoomed(root),
-                        (GetWindowLong(root, GWL_STYLE) & WS_CAPTION) != 0);
+                    if (n == null) continue;
+                    string name = n.Trim();
+                    if (name.Length == 0) continue;
+                    if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        name = name.Substring(0, name.Length - 4).TrimEnd();
+                    if (name.Length > 0) next.Add(name);
                 }
             }
-            if (root != seen) { seen = root; seenExe = ""; }
-            if (m != Mode.Normal && seenExe.Length == 0) seenExe = ExeName(root);
-            Apply(m, root);
+            excluded = next;
         }
 
-        // An ordinary maximized window first: Windows maximized it, it keeps its caption and it fills
-        // the work area (the taskbar is still there, so it never reaches rcMonitor) — it must still be
-        // recognized, or "also when a window is maximized" could never act on it.
-        // Filling the whole monitor is what a game does: exclusive, fullscreen optimizations and
-        // borderless fullscreen look the same from here, and share one switch.
-        public static Mode Classify(Rectangle frame, Rectangle monitor, Rectangle work, bool zoomed, bool hasCaption)
+        static bool IsAppIgnoredByFullscreenCheck(IntPtr fg)
         {
-            if (zoomed && hasCaption && Covers(frame, work, 8)) return Mode.Maximized;
-            if (Covers(frame, monitor, 2)) return Mode.Fullscreen;
-            return Mode.Normal;
+            if (excluded.Count == 0) return false; // no list: never look the process up
+            string path = ProcessImagePath(fg);
+            if (path.Length == 0) return false; // cannot tell: keep the protection
+            string name = Path.GetFileNameWithoutExtension(path);
+            return name.Length > 0 && excluded.Contains(name);
         }
 
-        static bool Covers(Rectangle r, Rectangle area, int tol)
+        static string ProcessImagePath(IntPtr hwnd)
         {
-            return r.Left <= area.Left + tol && r.Top <= area.Top + tol
-                && r.Right >= area.Right - tol && r.Bottom >= area.Bottom - tol;
-        }
-
-        static bool Cloaked(IntPtr h)
-        {
-            int cloaked;
-            return DwmGetWindowAttribute(h, DWMWA_CLOAKED, out cloaked, sizeof(int)) == 0 && cloaked != 0;
-        }
-
-        static bool IsShell(IntPtr h)
-        {
-            StringBuilder s = new StringBuilder(64);
-            if (GetClassName(h, s, s.Capacity) == 0) return false;
-            return shells.Contains(s.ToString());
-        }
-
-        static bool VisibleFrame(IntPtr h, out RECT r)
-        {
-            if (DwmGetWindowAttribute(h, DWMWA_EXTENDED_FRAME_BOUNDS, out r, Marshal.SizeOf(typeof(RECT))) == 0) return true;
-            return GetWindowRect(h, out r); // no DWM (a console session, say)
-        }
-
-        static bool MonitorRects(IntPtr h, out RECT mon, out RECT work)
-        {
-            mon = work = new RECT();
-            IntPtr m = MonitorFromWindow(h, MONITOR_DEFAULTTONEAREST);
-            if (m == IntPtr.Zero) return false;
-            MONITORINFO info = new MONITORINFO();
-            info.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
-            if (!GetMonitorInfo(m, ref info)) return false;
-            mon = info.rcMonitor; // its full bounds: a maximized window stops at rcWork instead
-            work = info.rcWork;
-            return true;
-        }
-
-        static Rectangle ToRect(RECT r)
-        {
-            return Rectangle.FromLTRB(r.left, r.top, r.right, r.bottom);
-        }
-
-        // A fullscreen window is worth naming in the event (a game, a video player): cached per window.
-        static string ExeName(IntPtr h)
-        {
+            uint pid;
+            GetWindowThreadProcessId(hwnd, out pid);
+            if (pid == 0) return "";
+            IntPtr p = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (p == IntPtr.Zero) return "";
             try
             {
-                uint pid;
-                GetWindowThreadProcessId(h, out pid);
-                if (pid == 0) return "";
-                using (Process p = Process.GetProcessById((int)pid)) return p.ProcessName + ".exe";
+                int size = 1024;
+                StringBuilder name = new StringBuilder(size);
+                if (!QueryFullProcessImageName(p, 0, name, ref size)) return "";
+                return name.ToString();
             }
-            catch (Exception) { return ""; }
+            finally { CloseHandle(p); }
         }
 
-        static void Apply(Mode m, IntPtr hwnd)
+        // TwinDesk's own option, not part of PowerToys: only a window Windows maximized, keeping its
+        // caption, over this monitor's work area. It never touches the notification-state answer.
+        static bool IsMaximizedWindowBlockingCrossing(IntPtr fg)
         {
-            string name = m == Mode.Maximized ? "maximized" : m == Mode.Fullscreen ? "fullscreen" : "normal";
-            bool now = (m == Mode.Fullscreen && AutoLockFullscreen) || (m == Mode.Maximized && AutoLockMaximized);
-            bool changed = name != mode || now != locked;
-            mode = name;
-            locked = now;
-            if (!changed || emit == null) return;
-            Dictionary<string, object> e = new Dictionary<string, object>();
-            e["event"] = "winMode";
-            e["locked"] = now;
-            e["mode"] = name;
-            e["exe"] = seenExe;
-            e["hwnd"] = hwnd.ToInt64();
-            emit(e);
+            if (!IsZoomed(fg)) return false;
+            if ((GetWindowLong(fg, GWL_STYLE) & WS_CAPTION) == 0) return false;
+            RECT frame;
+            if (!GetWindowRect(fg, out frame)) return false;
+            IntPtr mon = MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST);
+            if (mon == IntPtr.Zero) return false;
+            MONITORINFO info = new MONITORINFO();
+            info.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
+            if (!GetMonitorInfo(mon, ref info)) return false;
+            return Covers(frame, info.rcWork, 16);
+        }
+
+        static bool Covers(RECT r, RECT area, int tol)
+        {
+            return r.left <= area.left + tol && r.top <= area.top + tol
+                && r.right >= area.right - tol && r.bottom >= area.bottom - tol;
         }
     }
 }
