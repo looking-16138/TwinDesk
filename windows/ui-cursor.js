@@ -31,6 +31,12 @@ UI.tab({
     const syncRow = UI.row(t('Sync touchpads'), t('On: every computer’s mouse and trackpad move the one pointer, wherever it is. Off: using a computer’s own trackpad takes its pointer back. The same on both'), [syncPads]);
     const shake = UI.switch((v) => set({ shakeHome: v }), { label: t('Shake to bring the pointer back') });
     const shakeRow = UI.row(t('Shake to bring the pointer back'), t('While you use another computer, shake this computer’s mouse or trackpad left and right: the pointer comes back here'), [shake]);
+    // A game in fullscreen keeps the pointer here (windows-helper/WindowModeWatcher.cs). The helper
+    // goes by the foreground window's bounds, so exclusive and borderless fullscreen are one case.
+    const lockFullscreen = UI.switch((v) => set({ autoLockFullscreen: v }), { label: t('Keep the pointer here in fullscreen games') });
+    const lockFullscreenRow = UI.row(t('Keep the pointer here in fullscreen games'), t('A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again'), [lockFullscreen]);
+    const lockMaximized = UI.switch((v) => set({ autoLockMaximized: v }), { label: t('Also when a window is maximized') });
+    const lockMaximizedRow = UI.row(t('Also when a window is maximized'), t('Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here'), [lockMaximized]);
     const ble = UI.switch((v) => set({ ble: v }), { label: t('Over Bluetooth') });
     const bleRow = UI.row(t('Over Bluetooth'), t('When {name} isn’t on this network and you’re connected through Bluetooth (slower). Off: nothing crosses until you’re on Wi-Fi again. The same on both'), [ble]);
     // #158: the pointer and keys over Bluetooth while the rest stays on Wi-Fi (shared/bleinput.js), for
@@ -80,6 +86,7 @@ UI.tab({
       lock.el,
       crossing.card,
       UI.card(t('Feel'), [gestureRow, syncRow, shakeRow]),
+      UI.card(t('Games and fullscreen apps'), [lockFullscreenRow, lockMaximizedRow]),
       UI.card(t('Not on the same network'), [bleRow]),
       UI.card(t('Crowded Wi-Fi'), [bleInputRow]),
       UI.card(t('Right now'), [status], { cls: 'keep-on' }),
@@ -112,6 +119,8 @@ UI.tab({
       gestures.set(k.gestures !== false);
       syncPads.set(k.syncPads === true);
       shake.set(k.shakeHome !== false);
+      lockFullscreen.set(k.autoLockFullscreen !== false);
+      lockMaximized.set(k.autoLockMaximized === true);
       ble.set(k.ble !== false);
       resistance.set(k.resistancePx);
       // kvm.layout says where this computer is seen from the other one; the other one is opposite.

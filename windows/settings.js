@@ -83,6 +83,10 @@ function normalize(s) {
       linkedBy: kvm.linkedBy && typeof kvm.linkedBy === 'object'
         ? Object.fromEntries(Object.entries(kvm.linkedBy).filter(([, v]) => typeof v === 'boolean').slice(0, 50)) : {},
       gestures: bool(kvm.gestures, true), // Trackpad gestures work on the other computer (pair.sync 'gestures')
+      // A game in fullscreen keeps the pointer on this computer (windows-helper/WindowModeWatcher.cs);
+      // exclusive and borderless fullscreen are the same case there.
+      autoLockFullscreen: bool(kvm.autoLockFullscreen, true),
+      autoLockMaximized: bool(kvm.autoLockMaximized, false), // ... and a maximized window too (off: browsers maximize all day)
       shakeHome: bool(kvm.shakeHome, false), // shake this computer's mouse while driving: the pointer comes home (the helper's shake)
       syncPads: bool(kvm.syncPads, false), // every mouse and trackpad moves the one pointer; off: this PC's own takes it back (pair.sync 'syncPads')
       ble: bool(kvm.ble, true), // cursor sharing while the session runs through Bluetooth (pair.sync 'ble')
