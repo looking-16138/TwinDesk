@@ -110,6 +110,7 @@ namespace MacShare
 #endif
             Emit(ready);
             Application.Run(new ApplicationContext());
+            WindowModeWatcher.Stop(); // a clean exit releases the hooks and the 500 ms timer
             return 0;
         }
 

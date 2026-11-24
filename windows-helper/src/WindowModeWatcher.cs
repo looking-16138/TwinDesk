@@ -80,8 +80,10 @@ namespace MacShare
         [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);
         [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr h, int attr, out int v, int size);
         [DllImport("user32.dll")] static extern IntPtr SetWinEventHook(uint min, uint max, IntPtr mod, WinEventProc fn, uint pid, uint tid, uint flags);
+        [DllImport("user32.dll")] static extern bool UnhookWinEvent(IntPtr hook);
 
         static WinEventProc winEvent; // kept alive (the GC would collect it otherwise)
+        static IntPtr hookForeground, hookMinimize, hookMove, hookLocation, hookCloak;
         static Timer timer;
         static Action<Dictionary<string, object>> emit;
         static DateTime lastEval = DateTime.MinValue;
@@ -98,19 +100,50 @@ namespace MacShare
                 if (ev == EVENT_OBJECT_LOCATIONCHANGE && h != ForegroundRoot()) return;
                 Request();
             };
-            // WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS: our own ParkPad never locks anything.
-            // The hooks last as long as this thread's message loop (AppWindows.Watch keeps none either).
-            uint flags = WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS;
-            SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, IntPtr.Zero, winEvent, 0, 0, flags);
-            SetWinEventHook(EVENT_SYSTEM_MINIMIZESTART, EVENT_SYSTEM_MINIMIZEEND, IntPtr.Zero, winEvent, 0, 0, flags);
-            SetWinEventHook(EVENT_SYSTEM_MOVESIZESTART, EVENT_SYSTEM_MOVESIZEEND, IntPtr.Zero, winEvent, 0, 0, flags);
-            SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, winEvent, 0, 0, flags);
-            SetWinEventHook(EVENT_OBJECT_CLOAKED, EVENT_OBJECT_UNCLOAKED, IntPtr.Zero, winEvent, 0, 0, flags);
+            uint flags = WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS; // our own ParkPad never locks anything
+            hookForeground = Hook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, flags);
+            hookMinimize = Hook(EVENT_SYSTEM_MINIMIZESTART, EVENT_SYSTEM_MINIMIZEEND, flags);
+            hookMove = Hook(EVENT_SYSTEM_MOVESIZESTART, EVENT_SYSTEM_MOVESIZEEND, flags);
+            hookLocation = Hook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, flags);
+            hookCloak = Hook(EVENT_OBJECT_CLOAKED, EVENT_OBJECT_UNCLOAKED, flags);
+            // Whatever the hooks miss, the check below finds within half a second (a game that crashes,
+            // a display that changes its size). It is the fallback, so a failed hook is not fatal.
             timer = new Timer();
-            timer.Interval = 500; // a game that crashes or a monitor that changes brings no event
+            timer.Interval = 500;
             timer.Tick += delegate { Request(); };
             timer.Start();
             Evaluate();
+        }
+
+        static IntPtr Hook(uint min, uint max, uint flags)
+        {
+            IntPtr h = SetWinEventHook(min, max, IntPtr.Zero, winEvent, 0, 0, flags);
+            if (h == IntPtr.Zero)
+                Console.Error.WriteLine("winmode: event hook 0x" + min.ToString("X4") + "-0x" + max.ToString("X4") + " failed; the 500 ms check stays");
+            return h;
+        }
+
+        // A clean exit (the app went away) takes the hooks and the timer with it; idempotent.
+        public static void Stop()
+        {
+            Unhook(ref hookForeground);
+            Unhook(ref hookMinimize);
+            Unhook(ref hookMove);
+            Unhook(ref hookLocation);
+            Unhook(ref hookCloak);
+            if (timer != null) { timer.Stop(); timer.Dispose(); timer = null; }
+            emit = null;
+            seen = IntPtr.Zero;
+            seenExe = "";
+            mode = "normal";
+            locked = false;
+        }
+
+        static void Unhook(ref IntPtr hook)
+        {
+            if (hook == IntPtr.Zero) return;
+            UnhookWinEvent(hook);
+            hook = IntPtr.Zero;
         }
 
         // Coalesce a burst (window animations, a drag across monitors) into one evaluation, and let the
@@ -147,26 +180,22 @@ namespace MacShare
             Apply(m, root);
         }
 
-        // Filling the monitor is the fact: exclusive, "fullscreen optimizations" and borderless
-        // fullscreen look the same from here. Maximized is only taken apart from it when Windows
-        // itself maximized a window that keeps its caption and stays inside the work area.
+        // An ordinary maximized window first: Windows maximized it, it keeps its caption and it fills
+        // the work area (the taskbar is still there, so it never reaches rcMonitor) — it must still be
+        // recognized, or "also when a window is maximized" could never act on it.
+        // Filling the whole monitor is what a game does: exclusive, fullscreen optimizations and
+        // borderless fullscreen look the same from here, and share one switch.
         public static Mode Classify(Rectangle frame, Rectangle monitor, Rectangle work, bool zoomed, bool hasCaption)
         {
-            if (!Covers(frame, monitor, 2)) return Mode.Normal;
-            if (zoomed && hasCaption && FitsWithin(frame, work, 16)) return Mode.Maximized;
-            return Mode.Fullscreen;
+            if (zoomed && hasCaption && Covers(frame, work, 8)) return Mode.Maximized;
+            if (Covers(frame, monitor, 2)) return Mode.Fullscreen;
+            return Mode.Normal;
         }
 
-        static bool Covers(Rectangle r, Rectangle mon, int tol)
+        static bool Covers(Rectangle r, Rectangle area, int tol)
         {
-            return r.Left <= mon.Left + tol && r.Top <= mon.Top + tol
-                && r.Right >= mon.Right - tol && r.Bottom >= mon.Bottom - tol;
-        }
-
-        static bool FitsWithin(Rectangle r, Rectangle area, int tol)
-        {
-            return r.Left >= area.Left - tol && r.Top >= area.Top - tol
-                && r.Right <= area.Right + tol && r.Bottom <= area.Bottom + tol;
+            return r.Left <= area.Left + tol && r.Top <= area.Top + tol
+                && r.Right >= area.Right - tol && r.Bottom >= area.Bottom - tol;
         }
 
         static bool Cloaked(IntPtr h)
