@@ -2364,4 +2364,9 @@
   "Tap Allow in TwinDesk’s notification on the phone, then confirm Android’s VPN request.": "Tap Allow in TwinDesk’s notification on the phone, then confirm Android’s VPN request.",
   "It stopped.": "It stopped.",
   "Starting on the phone…": "Starting on the phone…",
+  "Games and fullscreen apps": "Games and fullscreen apps",
+  "Keep the pointer here in fullscreen games": "Keep the pointer here in fullscreen games",
+  "A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again": "A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again",
+  "Also when a window is maximized": "Also when a window is maximized",
+  "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here": "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here",
 });

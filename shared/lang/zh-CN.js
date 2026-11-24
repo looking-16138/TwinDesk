@@ -2364,4 +2364,9 @@
   "Tap Allow in TwinDesk’s notification on the phone, then confirm Android’s VPN request.": "在手机上的 TwinDesk 通知中点按“允许”，然后确认 Android 的 VPN 请求。",
   "It stopped.": "已停止。",
   "Starting on the phone…": "正在手机上启动…",
+  "Games and fullscreen apps": "游戏与全屏应用",
+  "Keep the pointer here in fullscreen games": "全屏游戏时保持指针在本机",
+  "A game in fullscreen — borderless too — keeps the pointer on this computer. Back to the edge as soon as it is a window again": "全屏（含无边框全屏）运行的游戏会把指针留在这台电脑上；一旦恢复为窗口，即可继续从屏幕边缘切换",
+  "Also when a window is maximized": "窗口最大化时也保持指针在本机",
+  "Off: browsers and File Explorer maximize all day and the pointer still crosses the edge. On: any maximized window keeps it here": "关闭时，浏览器、文件资源管理器等日常最大化的窗口仍可从边缘切换；开启后，任何最大化窗口都会把指针留在本机",
 });
