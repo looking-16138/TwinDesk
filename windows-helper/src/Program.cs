@@ -83,6 +83,13 @@ namespace MacShare
             else StartCursorGuard();
             HideCursor.WaitForGuard();
             capture.Start();
+            // A Full KVM agent also runs on Winlogon and the screen saver's desktop: the window filling
+            // the screen there is a security surface, not a game, so only the Default desktop is watched.
+            bool watchWindowMode = !agent;
+#if FULLKVM
+            if (agent) watchWindowMode = string.Equals(Agent.Desktop, "Default", StringComparison.OrdinalIgnoreCase);
+#endif
+            if (watchWindowMode) WindowModeWatcher.Init(Emit);
             capture.Flash = new Flash();
             if (!agent) AppWindows.Watch(delegate { Dictionary<string, object> e = new Dictionary<string, object>(); e["event"] = "winShown"; Emit(e); }); // Menus
             dropEdge = new DropEdge(capture, Emit);
@@ -310,6 +317,9 @@ namespace MacShare
                         capture.DeadmanMs = (int)Json.Num(c, "deadmanMs", 1500);
                         capture.DoubleTapMs = (int)Json.Num(c, "doubleTapMs", 400);
                         capture.Gestures = Json.Bool(c, "gestures", true);
+                        // A fullscreen game keeps the pointer here (WindowModeWatcher.cs).
+                        WindowModeWatcher.AutoLockFullscreen = Json.Bool(c, "autoLockFullscreen", true);
+                        WindowModeWatcher.AutoLockMaximized = Json.Bool(c, "autoLockMaximized", false);
                         capture.CrossingModifier = Json.Str(c, "crossingModifier", "");
                         capture.Emergency = new EmergencyShortcut(Json.Str(c, "emergencyKeys", EmergencyShortcut.Fallback));
                         break;
